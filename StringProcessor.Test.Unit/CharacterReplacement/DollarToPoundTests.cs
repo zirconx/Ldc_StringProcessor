@@ -1,10 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using StringProcessor.CharacterProcessors;
-using StringProcessor.Enums;
+using StringProcessor.CharacterReplacement;
 
-namespace StringProcessor.Test.Unit.CharacterProcessors
+namespace StringProcessor.Test.Unit.CharacterReplacement
 {
     [TestClass]
     [ExcludeFromCodeCoverage]
@@ -18,11 +17,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = '$';
 
             //Act
-            var result = processor.ProcessCharacter(new StringBuilder(), ref chr);
+            var result = processor.ProcessCharacter(new StringBuilder(), chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual('£', chr);
+            Assert.AreEqual('£', result);
         }
 
 
@@ -34,11 +32,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = 'A';
 
             //Act
-            var result = processor.ProcessCharacter(new StringBuilder(), ref chr);
+            var result = processor.ProcessCharacter(new StringBuilder(),  chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual('A', chr);
+            Assert.AreEqual('A', result);
         }
 
         [TestMethod]
@@ -49,11 +46,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var result = processor.ProcessCharacter(new StringBuilder(), ref chr);
+            var result = processor.ProcessCharacter(new StringBuilder(), chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual(char.MinValue, chr);
+            Assert.AreEqual(char.MinValue, result);
         }
 
         [TestMethod]
@@ -64,11 +60,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MaxValue;
 
             //Act
-            var result = processor.ProcessCharacter(new StringBuilder(), ref chr);
+            var result = processor.ProcessCharacter(new StringBuilder(), chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual(char.MaxValue, chr);
+            Assert.AreEqual(char.MaxValue, result);
         }
 
         [TestMethod]
@@ -79,11 +74,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var result = processor.ProcessCharacter(null, ref chr);
+            var result = processor.ProcessCharacter(null, chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual(char.MinValue, chr);
+            Assert.AreEqual(char.MinValue, result);
         }
     }
 }

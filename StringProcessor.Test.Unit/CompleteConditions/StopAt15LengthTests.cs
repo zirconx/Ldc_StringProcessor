@@ -2,10 +2,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using StringProcessor.CharacterProcessors;
-using StringProcessor.Enums;
+using StringProcessor.CompleteConditions;
 
-namespace StringProcessor.Test.Unit.CharacterProcessors
+namespace StringProcessor.Test.Unit.CompleteConditions
 {
     [TestClass]
     [ExcludeFromCodeCoverage]
@@ -20,11 +19,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var result = processor.ProcessCharacter(current, ref chr);
+            var result = processor.IsComplete(current, chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Stop, result);
-            Assert.AreEqual(char.MinValue, chr);
+            Assert.IsTrue(result);
         }
 
         [TestMethod]
@@ -36,11 +34,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var result = processor.ProcessCharacter(current, ref chr);
+            var result = processor.IsComplete(current, chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual(char.MinValue, chr);
+            Assert.IsFalse(result);
         }
 
         [TestMethod]
@@ -52,11 +49,10 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var result = processor.ProcessCharacter(current, ref chr);
+            var result = processor.IsComplete(current, chr);
 
             //Assert
-            Assert.AreEqual(ProcessorResult.Continue, result);
-            Assert.AreEqual(char.MinValue, chr);
+            Assert.IsFalse(result);
         }
 
         [TestMethod]
@@ -68,7 +64,7 @@ namespace StringProcessor.Test.Unit.CharacterProcessors
             var chr = char.MinValue;
 
             //Act
-            var _ = processor.ProcessCharacter(null, ref chr);
+            var _ = processor.IsComplete(null, chr);
         }
     }
 }

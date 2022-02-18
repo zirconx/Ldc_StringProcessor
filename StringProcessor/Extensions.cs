@@ -1,27 +1,35 @@
 ﻿using System.Text;
-using StringProcessor.CharacterProcessors;
-using StringProcessor.Enums;
+using StringProcessor.Interfaces;
 
 namespace StringProcessor
 {
     internal static class Extensions
     {
-        public static ProcessorResult ProcessCharacter(
-            this ICharacterProcessor[] characterProcessors,
+        public static char ProcessCharacter(
+            this ICharacterReplacement[] characterProcessors,
             StringBuilder currentString, 
-            ref char chr
+            char chr
         )
         {
             foreach (var characterProcessor in characterProcessors)
             {
-                var res = characterProcessor.ProcessCharacter(currentString, ref chr);
-                if (res == ProcessorResult.Stop)
+                chr = characterProcessor.ProcessCharacter(currentString, chr);
+                if (chr == char.MinValue)
                 {
-                    return res;
+                    break;
                 }
             }
 
-            return ProcessorResult.Continue;
+            return chr;
+        }
+
+        public static bool IsComplete(
+            this ICompleteCondition[] characterProcessors,
+            StringBuilder currentString,
+            char chr
+        )
+        {
+            return characterProcessors.Any(p => p.IsComplete(currentString, chr));
         }
     }
 }

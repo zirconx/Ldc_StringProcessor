@@ -6,8 +6,14 @@ using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using StringProcessor.CharacterProcessors;
-using StringProcessor.Enums;
+using StringProcessor.Interfaces;
+
+// ReSharper disable CollectionNeverUpdated.Local
+// ReSharper disable UnusedParameter.Local
+#pragma warning disable CS8620
+#pragma warning disable CS8625
+#pragma warning disable CS8600
+#pragma warning disable CS8604
 
 namespace StringProcessor.Test.Unit
 {
@@ -24,16 +30,32 @@ namespace StringProcessor.Test.Unit
             var processor = new Processor();
 
             //Assert
-            Assert.IsNotNull(processor.CharacterProcessors);
-            Assert.AreEqual(0, processor.CharacterProcessors.Length);
+            Assert.IsNotNull(processor.CharacterReplacements);
+            Assert.AreEqual(0, processor.CharacterReplacements.Length);
+
+
+            Assert.IsNotNull(processor.CompleteConditions);
+            Assert.AreEqual(0, processor.CompleteConditions.Length);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void Constructor_NullListProcessors()
+        public void Constructor_NullLists_ArgumentException()
         {
             //Set up
-            List<ICharacterProcessor> processors = null;
+            ICharacterReplacement[] processors = null;
+            ICompleteCondition[] complete = null;
+
+            //Act
+            var _ = new Processor(processors, complete);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Constructor_NullProcessorList_ArgumentException()
+        {
+            //Set up
+            ICharacterReplacement[] processors = null;
 
             //Act
             var _ = new Processor(processors);
@@ -41,43 +63,63 @@ namespace StringProcessor.Test.Unit
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void Constructor_NullArrayProcessors()
+        public void Constructor_NullCompleteLists_ArgumentException()
         {
             //Set up
-            ICharacterProcessor[] processors = null;
+            ICompleteCondition[] complete = null;
 
             //Act
-            var _ = new Processor(processors);
+            var _ = new Processor(complete);
         }
-
+        
         [TestMethod]
         public void Constructor_EmptyListProcessors()
         {
             //Set up
-            var processors = new List<ICharacterProcessor>();
+            var processors = new List<ICharacterReplacement>();
+            var complete = new List<ICompleteCondition>();
 
             //Act
-            var processor = new Processor(processors);
+            var processor = new Processor(processors, complete);
 
             //Assert
-            Assert.IsNotNull(processor.CharacterProcessors);
-            Assert.AreEqual(0, processor.CharacterProcessors.Length);
+            Assert.IsNotNull(processor.CharacterReplacements);
+            Assert.AreEqual(0, processor.CharacterReplacements.Length);
+
+            Assert.IsNotNull(processor.CompleteConditions);
+            Assert.AreEqual(0, processor.CompleteConditions.Length);
         }
 
         [TestMethod]
-        public void Constructor_ListContainsNullProcessors_FilteredOut()
+        public void Constructor_ProcessorListContainsNullProcessors_FilteredOut()
         {
             //Set up
-            var chrProcessor = (new Mock<ICharacterProcessor>()).Object;
-            var processors = new List<ICharacterProcessor> { chrProcessor, null, null };
+            var characterProcessor = (new Mock<ICharacterReplacement>()).Object;
+            var processors = new [] { characterProcessor, null, null };
 
             //Act
             var processor = new Processor(processors);
 
             //Assert
-            Assert.IsNotNull(processor.CharacterProcessors);
-            Assert.AreEqual(1, processor.CharacterProcessors.Length);
-            Assert.AreEqual(chrProcessor, processor.CharacterProcessors.Single());
+            Assert.IsNotNull(processor.CharacterReplacements);
+            Assert.AreEqual(1, processor.CharacterReplacements.Length);
+            Assert.AreEqual(characterProcessor, processor.CharacterReplacements.Single());
+        }
+
+        [TestMethod]
+        public void Constructor_CompleteListContainsNullProcessors_FilteredOut()
+        {
+            //Set up
+            var completeCondition = (new Mock<ICompleteCondition>()).Object;
+            var completeConditions = new [] { completeCondition, null, null };
+
+            //Act
+            var processor = new Processor(completeConditions);
+
+            //Assert
+            Assert.IsNotNull(processor.CompleteConditions);
+            Assert.AreEqual(1, processor.CompleteConditions.Length);
+            Assert.AreEqual(completeCondition, processor.CompleteConditions.Single());
         }
 
         #endregion
@@ -125,10 +167,10 @@ namespace StringProcessor.Test.Unit
         public void Process_CallsCharacterProcessors()
         {
             //Set up
-            var characterProcessorMock = new Mock<ICharacterProcessor>();
+            var characterProcessorMock = new Mock<ICharacterReplacement>();
             characterProcessorMock
-                .Setup(m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny))
-                .Returns(ProcessorResult.Continue);
+                .Setup(m => m.ProcessCharacter(It.IsAny<StringBuilder>(), It.IsAny<char>()))
+                .Returns((StringBuilder sb, char c) => c);
 
             var processor = new Processor(characterProcessorMock.Object);
 
@@ -140,7 +182,7 @@ namespace StringProcessor.Test.Unit
 
             //Assert
             characterProcessorMock.Verify(
-                m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny),
+                m => m.ProcessCharacter(It.IsAny<StringBuilder>(), It.IsAny<char>()),
                 Times.Exactly(stringLength)
             );
             Assert.AreEqual(new string('A', stringLength), result);
@@ -151,12 +193,11 @@ namespace StringProcessor.Test.Unit
         public void Process_CharacterProcessorClears_EmptyExpectedException()
         {
             //Set up
-            var characterProcessorMock = new Mock<ICharacterProcessor>();
+            var characterProcessorMock = new Mock<ICharacterReplacement>();
 
             characterProcessorMock
-                .Setup(m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny))
-                .Callback(delegate(StringBuilder currentString, ref char chr) { chr = char.MinValue; })
-                .Returns(ProcessorResult.Continue);
+                .Setup(m => m.ProcessCharacter(It.IsAny<StringBuilder>(), It.IsAny<char>()))
+                .Returns((StringBuilder sb, char c) => char.MinValue);
 
             var processor = new Processor(characterProcessorMock.Object);
 
@@ -172,7 +213,7 @@ namespace StringProcessor.Test.Unit
             {
                 //Assert
                 characterProcessorMock.Verify(
-                    m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny),
+                    m => m.ProcessCharacter(It.IsAny<StringBuilder>(), It.IsAny<char>()),
                     Times.Exactly(stringLength)
                 );
             }
@@ -183,13 +224,13 @@ namespace StringProcessor.Test.Unit
         public void Process_CharacterProcessorStops_EmptyExpectedException()
         {
             //Set up
-            var characterProcessorMock = new Mock<ICharacterProcessor>();
+            var completeConditionMock = new Mock<ICompleteCondition>();
 
-            characterProcessorMock
-                .Setup(m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny))
-                .Returns(ProcessorResult.Stop);
+            completeConditionMock
+                .Setup(m => m.IsComplete(It.IsAny<StringBuilder>(), It.IsAny<char>()))
+                .Returns(true);
 
-            var processor = new Processor(characterProcessorMock.Object);
+            var processor = new Processor(completeConditionMock.Object);
 
             var stringLength = 10;
             var startingString = new string('A', stringLength);
@@ -202,8 +243,8 @@ namespace StringProcessor.Test.Unit
             finally
             {
                 //Assert
-                characterProcessorMock.Verify(
-                    m => m.ProcessCharacter(It.IsAny<StringBuilder>(), ref It.Ref<char>.IsAny),
+                completeConditionMock.Verify(
+                    m => m.IsComplete(It.IsAny<StringBuilder>(), It.IsAny<char>()),
                     Times.Once
                 );
             }
